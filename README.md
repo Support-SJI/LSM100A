@@ -31,16 +31,6 @@ For other information, please refer to the document in Document.
 
 ## Architecture of the SDK
 
-> Document <br/>
-- HW Datasheet
-- User Manual
-- FW Download Guide
-- SDK Quick Start Guide
-- LoRa CLI Manual
-- LoRa API Manual
-- Sigfox CLI Manual
-- Sigfox API Manual
-
 > Drivers <br/>
 
 > Middlewares <br/>
