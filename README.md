@@ -8,8 +8,6 @@
 
 </br>
 
-## Source code download
-  + https://github.com/Support-SJI/LSM100A_Sigfox_LoRaWAN1.0.4_Source_Code
 
 </br>
 
