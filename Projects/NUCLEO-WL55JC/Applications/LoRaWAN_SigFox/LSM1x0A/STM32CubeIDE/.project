@@ -590,7 +590,7 @@
 		</variable>
 		<variable>
 			<name>APP_MAIN1</name>
-			<value>file:/D:/project/LSM100A_SDK_LoRaWAN104_merge/Projects/NUCLEO-WL55JC/Applications/LoRaWAN_SigFox/LSM1x0A</value>
+			<value>$%7BPARENT-1-PROJECT_LOC%7D</value>
 		</variable>
 		<variable>
 			<name>PROJECT_ROOT</name>
