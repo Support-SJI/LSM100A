@@ -8,13 +8,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -126,6 +125,10 @@ typedef enum
 /* Variable used to store Appli vector position */
 uint32_t AppliVectorsAddr;
 #endif /* (SFU_ISOLATE_SE_WITH_FIREWALL) || (CKS_ENABLED) */
+#if defined(CKS_ENABLED)
+uint32_t PrevIpccC1RxIrqState;
+uint32_t PrevIpccC1TxIrqState;
+#endif /* CKS_ENABLED */
 
 #if defined(SFU_ISOLATE_SE_WITH_FIREWALL) && defined(IT_MANAGEMENT)
 /* Variable used to store User Primask value */
@@ -297,6 +300,10 @@ SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peS
   /* Set SE vector */
   SCB->VTOR = (uint32_t)&SeVectorsTable;
 #endif /* SFU_ISOLATE_SE_WITH_FIREWALL || CKS_ENABLED */
+#if defined(CKS_ENABLED)
+  PrevIpccC1RxIrqState = NVIC_GetEnableIRQ(IPCC_C1_RX_IRQn);
+  PrevIpccC1TxIrqState = NVIC_GetEnableIRQ(IPCC_C1_TX_IRQn);
+#endif /* CKS_ENABLED */
 
   *peSE_Status =  SE_OK;
 
@@ -317,8 +324,14 @@ SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peS
 
   /* Restore Appli Vector Value   */
 #if defined(CKS_ENABLED)
-  HAL_NVIC_DisableIRQ(IPCC_C1_RX_IRQn);
-  HAL_NVIC_DisableIRQ(IPCC_C1_TX_IRQn);
+  if (PrevIpccC1RxIrqState == 0UL)
+  {
+    HAL_NVIC_DisableIRQ(IPCC_C1_RX_IRQn);
+  }
+  if (PrevIpccC1TxIrqState == 0UL)
+  {
+    HAL_NVIC_DisableIRQ(IPCC_C1_TX_IRQn);
+  }
   __ISB();
   SCB->VTOR = AppliVectorsAddr;
 #endif /* CKS_ENABLED */
@@ -1346,5 +1359,3 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *co
 /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

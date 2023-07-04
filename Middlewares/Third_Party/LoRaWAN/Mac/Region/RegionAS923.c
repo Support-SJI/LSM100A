@@ -39,17 +39,49 @@
   ******************************************************************************
   */
 #include "radio.h"
-#include "RegionCommon.h"
 #include "RegionAS923.h"
-#include "lorawan_conf.h"  /* REGION_* */
 
 // Definitions
 #define CHANNELS_MASK_SIZE                1
 
-#ifndef REGION_AS923_DEFAULT_CHANNEL_PLAN
-#define REGION_AS923_DEFAULT_CHANNEL_PLAN CHANNEL_PLAN_GROUP_AS923_1
-#endif
+//#ifndef REGION_AS923_DEFAULT_CHANNEL_PLAN
+//#define REGION_AS923_DEFAULT_CHANNEL_PLAN CHANNEL_PLAN_GROUP_AS923_1_JP
+//#endif
+uint8_t REGION_AS923_DEFAULT_CHANNEL_PLAN;
 
+uint32_t REGION_AS923_FREQ_OFFSET;
+uint32_t AS923_MIN_RF_FREQUENCY;
+uint32_t AS923_MAX_RF_FREQUENCY;
+
+
+uint8_t AS923_sub_band_setting (LoRaRegion_AS923_sub_band_t band)
+{
+	if(band == sub_band_AS923_1)
+	{
+		REGION_AS923_DEFAULT_CHANNEL_PLAN = CHANNEL_PLAN_GROUP_AS923_1;
+		REGION_AS923_FREQ_OFFSET = 0;
+		//AS923_MIN_RF_FREQUENCY = 921800000;
+		//AS923_MAX_RF_FREQUENCY = 923400000;
+		AS923_MIN_RF_FREQUENCY = 921500000;
+		AS923_MAX_RF_FREQUENCY = 928000000;
+	}
+	else if(band == sub_band_AS923_1_JP)
+	{
+		REGION_AS923_DEFAULT_CHANNEL_PLAN = CHANNEL_PLAN_GROUP_AS923_1_JP;
+		REGION_AS923_FREQ_OFFSET = 0;
+		AS923_MIN_RF_FREQUENCY = 920600000;
+		AS923_MAX_RF_FREQUENCY = 923400000;
+	}
+	else
+	{
+		return 0;
+	}
+	return 1;
+}
+
+#define AS923_LBT_RX_BANDWIDTH            200000
+
+#if 0 //define band set
 #if( REGION_AS923_DEFAULT_CHANNEL_PLAN == CHANNEL_PLAN_GROUP_AS923_1 )
 
 // Channel plan CHANNEL_PLAN_GROUP_AS923_1
@@ -94,7 +126,7 @@
  * Specifies the reception bandwidth to be used while executing the LBT
  * Max channel bandwidth is 200 kHz
  */
-#define AS923_LBT_RX_BANDWIDTH            200000
+//#define AS923_LBT_RX_BANDWIDTH            200000
 
 #undef AS923_TX_MAX_DATARATE
 #define AS923_TX_MAX_DATARATE             DR_5
@@ -113,12 +145,20 @@
 
 #endif /* REGION_AS923_DEFAULT_CHANNEL_PLAN */
 
+#endif //define band set
+
 #if defined( REGION_AS923 )
 /*
  * Non-volatile module context.
  */
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
 static RegionNvmDataGroup1_t* RegionNvmGroup1;
 static RegionNvmDataGroup2_t* RegionNvmGroup2;
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+// static RegionNvmDataGroup1_t* RegionNvmGroup1; /* Unused for this region */
+static RegionNvmDataGroup2_t* RegionNvmGroup2;
+static Band_t* RegionBands;
+#endif /* REGION_VERSION */
 
 // Static functions
 static bool VerifyRfFreq( uint32_t freq )
@@ -280,6 +320,7 @@ PhyParam_t RegionAS923GetPhyParam( GetPhyParams_t* getPhy )
             phyParam.Value = REGION_COMMON_DEFAULT_JOIN_ACCEPT_DELAY2;
             break;
         }
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
         case PHY_MAX_FCNT_GAP:
         {
             phyParam.Value = REGION_COMMON_DEFAULT_MAX_FCNT_GAP;
@@ -290,6 +331,13 @@ PhyParam_t RegionAS923GetPhyParam( GetPhyParams_t* getPhy )
             phyParam.Value = ( REGION_COMMON_DEFAULT_ACK_TIMEOUT + randr( -REGION_COMMON_DEFAULT_ACK_TIMEOUT_RND, REGION_COMMON_DEFAULT_ACK_TIMEOUT_RND ) );
             break;
         }
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+        case PHY_RETRANSMIT_TIMEOUT:
+        {
+            phyParam.Value = ( REGION_COMMON_DEFAULT_RETRANSMIT_TIMEOUT + randr( -REGION_COMMON_DEFAULT_RETRANSMIT_TIMEOUT_RND, REGION_COMMON_DEFAULT_RETRANSMIT_TIMEOUT_RND ) );
+            break;
+        }
+#endif /* REGION_VERSION */
         case PHY_DEF_DR1_OFFSET:
         {
             phyParam.Value = REGION_COMMON_DEFAULT_RX1_DR_OFFSET;
@@ -364,7 +412,11 @@ PhyParam_t RegionAS923GetPhyParam( GetPhyParams_t* getPhy )
         }
         case PHY_PING_SLOT_CHANNEL_FREQ:
         {
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
             phyParam.Value = AS923_PING_SLOT_CHANNEL_FREQ;
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+            phyParam.Value = AS923_PING_SLOT_CHANNEL_FREQ - REGION_AS923_FREQ_OFFSET;
+#endif /* REGION_VERSION */
             break;
         }
         case PHY_PING_SLOT_CHANNEL_DR:
@@ -395,8 +447,13 @@ PhyParam_t RegionAS923GetPhyParam( GetPhyParams_t* getPhy )
 void RegionAS923SetBandTxDone( SetBandTxDoneParams_t* txDone )
 {
 #if defined( REGION_AS923 )
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
     RegionCommonSetBandTxDone( &RegionNvmGroup1->Bands[RegionNvmGroup2->Channels[txDone->Channel].Band],
                                txDone->LastTxAirTime, txDone->Joined, txDone->ElapsedTimeSinceStartUp );
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+    RegionCommonSetBandTxDone( &RegionBands[RegionNvmGroup2->Channels[txDone->Channel].Band],
+                               txDone->LastTxAirTime, txDone->Joined, txDone->ElapsedTimeSinceStartUp );
+#endif /* REGION_VERSION */
 #endif /* REGION_AS923 */
 }
 
@@ -417,11 +474,19 @@ void RegionAS923InitDefaults( InitDefaultsParams_t* params )
                 return;
             }
 
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
             RegionNvmGroup1 = (RegionNvmDataGroup1_t*) params->NvmGroup1;
             RegionNvmGroup2 = (RegionNvmDataGroup2_t*) params->NvmGroup2;
 
             // Default bands
             memcpy1( ( uint8_t* )RegionNvmGroup1->Bands, ( uint8_t* )bands, sizeof( Band_t ) * AS923_MAX_NB_BANDS );
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+            RegionNvmGroup2 = (RegionNvmDataGroup2_t*) params->NvmGroup2;
+            RegionBands = (Band_t*) params->Bands;
+
+            // Default bands
+            memcpy1( ( uint8_t* )RegionBands, ( uint8_t* )bands, sizeof( Band_t ) * AS923_MAX_NB_BANDS );
+#endif /* REGION_VERSION */
 
             // Default channels
             RegionNvmGroup2->Channels[0] = ( ChannelParams_t ) AS923_LC1;
@@ -692,7 +757,11 @@ bool RegionAS923TxConfig( TxConfigParams_t* txConfig, int8_t* txPower, TimerTime
 #if defined( REGION_AS923 )
     RadioModems_t modem;
     int8_t phyDr = DataratesAS923[txConfig->Datarate];
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
     int8_t txPowerLimited = RegionCommonLimitTxPower( txConfig->TxPower, RegionNvmGroup1->Bands[RegionNvmGroup2->Channels[txConfig->Channel].Band].TxMaxPower );
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+    int8_t txPowerLimited = RegionCommonLimitTxPower( txConfig->TxPower, RegionBands[RegionNvmGroup2->Channels[txConfig->Channel].Band].TxMaxPower );
+#endif /* REGION_VERSION */
     uint32_t bandwidth = RegionCommonGetBandwidth( txConfig->Datarate, BandwidthsAS923 );
     int8_t phyTxPower = 0;
 
@@ -980,7 +1049,11 @@ LoRaMacStatus_t RegionAS923NextChannel( NextChanParams_t* nextChanParams, uint8_
     countChannelsParams.Datarate = nextChanParams->Datarate;
     countChannelsParams.ChannelsMask = RegionNvmGroup2->ChannelsMask;
     countChannelsParams.Channels = RegionNvmGroup2->Channels;
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
     countChannelsParams.Bands = RegionNvmGroup1->Bands;
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+    countChannelsParams.Bands = RegionBands;
+#endif /* REGION_VERSION */
     countChannelsParams.MaxNbChannels = AS923_MAX_NB_CHANNELS;
     countChannelsParams.JoinChannels = &joinChannels;
 
@@ -1000,31 +1073,34 @@ LoRaMacStatus_t RegionAS923NextChannel( NextChanParams_t* nextChanParams, uint8_
 
     if( status == LORAMAC_STATUS_OK )
     {
-#if ( REGION_AS923_DEFAULT_CHANNEL_PLAN == CHANNEL_PLAN_GROUP_AS923_1_JP )
-        // Executes the LBT algorithm when operating in Japan
-        uint8_t channelNext = 0;
+			if( REGION_AS923_DEFAULT_CHANNEL_PLAN == CHANNEL_PLAN_GROUP_AS923_1_JP )
+			{
+					// Executes the LBT algorithm when operating in Japan
+					uint8_t channelNext = 0;
 
-        for( uint8_t  i = 0, j = randr( 0, nbEnabledChannels - 1 ); i < AS923_MAX_NB_CHANNELS; i++ )
-        {
-            channelNext = enabledChannels[j];
-            j = ( j + 1 ) % nbEnabledChannels;
+					for( uint8_t  i = 0, j = randr( 0, nbEnabledChannels - 1 ); i < AS923_MAX_NB_CHANNELS; i++ )
+					{
+							channelNext = enabledChannels[j];
+							j = ( j + 1 ) % nbEnabledChannels;
 
-            // Perform carrier sense for AS923_CARRIER_SENSE_TIME
-            // If the channel is free, we can stop the LBT mechanism
-            if( Radio.IsChannelFree( RegionNvmGroup2->Channels[channelNext].Frequency, AS923_LBT_RX_BANDWIDTH, AS923_RSSI_FREE_TH, AS923_CARRIER_SENSE_TIME ) == true )
-            {
-                // Free channel found
-                *channel = channelNext;
-                return LORAMAC_STATUS_OK;
-            }
-        }
-        // Even if one or more channels are available according to the channel plan, no free channel
-        // was found during the LBT procedure.
-        status = LORAMAC_STATUS_NO_FREE_CHANNEL_FOUND;
-#else
-        // We found a valid channel
-        *channel = enabledChannels[randr( 0, nbEnabledChannels - 1 )];
-#endif
+							// Perform carrier sense for AS923_CARRIER_SENSE_TIME
+							// If the channel is free, we can stop the LBT mechanism
+							if( Radio.IsChannelFree( RegionNvmGroup2->Channels[channelNext].Frequency, AS923_LBT_RX_BANDWIDTH, AS923_RSSI_FREE_TH, AS923_CARRIER_SENSE_TIME ) == true )
+							{
+									// Free channel found
+									*channel = channelNext;
+									return LORAMAC_STATUS_OK;
+							}
+					}
+					// Even if one or more channels are available according to the channel plan, no free channel
+					// was found during the LBT procedure.
+					status = LORAMAC_STATUS_NO_FREE_CHANNEL_FOUND;
+				}
+				else
+				{
+					// We found a valid channel
+					*channel = enabledChannels[randr( 0, nbEnabledChannels - 1 )];
+				}
     }
     else if( status == LORAMAC_STATUS_NO_CHANNEL_FOUND )
     {
@@ -1119,6 +1195,7 @@ bool RegionAS923ChannelsRemove( ChannelRemoveParams_t* channelRemove  )
 #endif /* REGION_AS923 */
 }
 
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
 void RegionAS923SetContinuousWave( ContinuousWaveParams_t* continuousWave )
 {
 #if defined( REGION_AS923 )
@@ -1152,6 +1229,31 @@ uint8_t RegionAS923ApplyDrOffset( uint8_t downlinkDwellTime, int8_t dr, int8_t d
 #endif /* REGION_AS923 */
 
 }
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+uint8_t RegionAS923ApplyDrOffset( uint8_t downlinkDwellTime, int8_t dr, int8_t drOffset )
+{
+#if defined( REGION_AS923 )
+    // Initialize minDr
+    int8_t minDr;
+
+    if( downlinkDwellTime == 0 )
+    {
+        // Update the minDR for a downlink dwell time configuration of 0
+        minDr = EffectiveRx1DrOffsetDownlinkDwell0AS923[dr][drOffset];
+    }
+    else
+    {
+        // Update the minDR for a downlink dwell time configuration of 1
+        minDr = EffectiveRx1DrOffsetDownlinkDwell1AS923[dr][drOffset];
+    }
+
+    return minDr;
+#else
+    return 0;
+#endif /* REGION_AS923 */
+
+}
+#endif /* REGION_VERSION */
 
 void RegionAS923RxBeaconSetup( RxBeaconSetup_t* rxBeaconSetup, uint8_t* outDr )
 {

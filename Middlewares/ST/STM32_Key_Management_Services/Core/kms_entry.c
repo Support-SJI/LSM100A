@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -1178,7 +1177,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1368,7 +1367,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1555,7 +1554,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1736,7 +1735,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1924,7 +1923,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -2106,7 +2105,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -2204,7 +2203,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -2450,4 +2449,3 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

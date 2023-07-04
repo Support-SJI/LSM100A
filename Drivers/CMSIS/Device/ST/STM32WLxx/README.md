@@ -27,10 +27,11 @@ Details about the content of this release are available in the release note [her
 
 In this table, you can find the successive versions of this CMSIS Device component, in-line with the corresponding versions of the full MCU package:
 
-CMSIS Device WL | CMSIS Core | Was delivered in the full MCU package
---------------- | ---------- | -------------------------------------
-Tag v1.0.0 | Tag v5.6.0_cm4 | Tag v1.0.0
-Tag v1.1.0 | Tag v5.6.0_cm4 | Tag v1.1.0
+CMSIS Device WL | CMSIS Core     | Was delivered in the full MCU package
+--------------- | -------------- | -------------------------------------
+Tag v1.0.0      | Tag v5.6.0_cm4 | Tag v1.0.0
+Tag v1.1.0      | Tag v5.6.0_cm4 | Tag v1.1.0
+Tag v1.1.1      | Tag v5.6.0_cm4 | Tag v1.2.0
 
 
 The full **STM32CubeWL** MCU package is available [here](https://github.com/STMicroelectronics/STM32CubeWL).

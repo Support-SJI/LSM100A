@@ -43,8 +43,16 @@ extern "C"
 /* Includes ------------------------------------------------------------------*/
 #include "utilities_conf.h"
 
-
 /* Exported types ------------------------------------------------------------*/
+/*!
+ * LMN (LoRaMac-node) status
+ */
+typedef enum LmnStatus_e
+{
+  LMN_STATUS_ERROR = 0,
+  LMN_STATUS_OK = !LMN_STATUS_ERROR
+} LmnStatus_t;
+
 /* Exported constants --------------------------------------------------------*/
 /* External variables --------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
