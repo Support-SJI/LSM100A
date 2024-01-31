@@ -140,6 +140,16 @@ static const struct ATCommand_s ATCommand[] =
     .set = AT_return_error_l,
     .run = AT_return_error_l,
   },
+	  {
+    .string = AT_BAUDRATE,
+    .size_string = sizeof(AT_BAUDRATE) - 1,
+#ifndef NO_HELP
+    .help_string = "AT"AT_BAUDRATE" set baudrate\r\n",
+#endif /* !NO_HELP */
+    .get = AT_BaudRate_get,
+    .set = AT_BaudRate_set,
+    .run = AT_return_error_l,
+  },
 
   /* Keys, IDs and EUIs management commands */
   {
@@ -692,6 +702,17 @@ static const struct ATCommand_s ATCommand[] =
 #endif /* !NO_HELP */
 	.get = AT_Unconfirmed_Retransmission_get,
 	.set = AT_Unconfirmed_Retransmission_set,
+	.run = AT_return_error_l,
+  },
+	
+	{
+	  	.string = AT_CHMASK,
+	.size_string = sizeof(AT_CHMASK) - 1,
+#ifndef NO_HELP
+	.help_string = "AT"AT_CHMASK"=<NbTrans><CR>. Get or Set channel mask\r\n",
+#endif /* !NO_HELP */
+	.get = AT_Channel_Mask_get,
+	.set = AT_Channel_Mask_set,
 	.run = AT_return_error_l,
   },
   

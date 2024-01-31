@@ -38,6 +38,8 @@
 #include "lora_eeprom_if.h"
 #include "sgfx_eeprom_if.h"
 #include "RegionAS923.h"
+#include "LoRaMacCrypto.h"
+#include "usart.h"
 
 
 /* USER CODE BEGIN Includes */
@@ -84,6 +86,8 @@ static LmHandlerAppData_t AppData = { 0, 0, AppDataBuffer };
 
 /* Dummy data sent periodically to let the tester respond with start test command*/
 static UTIL_TIMER_Object_t TxCertifTimer;
+
+static uint16_t enable_chmask[6] = {0,};
 
 /* USER CODE BEGIN PV */
 
@@ -208,6 +212,10 @@ ATEerror_t AT_selection_set_l(const char *param)
 	const char *buf = param;
 	uint32_t selection;
 
+	uint32_t baudrate_num;
+	E2P_LORA_BaudRate_Read(&baudrate_num);
+	
+	
 	/* read and set the verbose level */
 	if (1 != tiny_sscanf(buf, "%u", &selection))
 	{
@@ -222,8 +230,16 @@ ATEerror_t AT_selection_set_l(const char *param)
 	}
 	else if(selection == ACTIVE_APP_SIGFOX)
 	{
-		E2P_LORA_Write_Mode(0);
-		E2P_Write_Mode(1);
+		if( baudrate_num == 9600 )
+		{
+			E2P_LORA_Write_Mode(0);
+		  E2P_Write_Mode(1);  
+		}
+		else
+		{
+		  AT_PRINTF("Set the Baudrate to 9600\r\n");
+			return AT_PARAM_ERROR;
+		}	
 	}
 	NVIC_SystemReset();
       //return AT_OK;
@@ -309,6 +325,7 @@ void AT_event_receive(int flag, LmHandlerAppData_t *appData, LmHandlerRxParams_t
 
   if ((params != NULL) && (params->RxSlot < RX_SLOT_NONE))
   {
+		AT_PRINTF("confirmed flag: %d",flag);
     AT_PRINTF("+EVT:RX_%s, PORT %d, DR %d, RSSI %d, SNR %d", slotStrings[params->RxSlot], RxPort,
               params->Datarate, params->Rssi, params->Snr);
     if (params->LinkCheck == true)
@@ -317,6 +334,17 @@ void AT_event_receive(int flag, LmHandlerAppData_t *appData, LmHandlerRxParams_t
     }
     AT_PRINTF("\r\n");
   }
+	
+	if(flag == 1)
+	{
+			appData->Port = 0xFF;
+	  	appData->Buffer = NULL;
+			appData->BufferSize = 0;
+		
+			AT_PRINTF("+EVT:Prepare Frame UNCONFIRMED UPLINK\r\n");	
+		
+	  	LmHandlerSend(appData, LORAMAC_HANDLER_UNCONFIRMED_MSG, NULL);
+	}
 
   /* USER CODE BEGIN AT_event_receive_2 */
 
@@ -536,6 +564,56 @@ ATEerror_t AT_LocalTime_get(const char *param)
   /* USER CODE END AT_LocalTime_get_2 */
 }
 
+ATEerror_t AT_BaudRate_set(const char *param)
+{
+  /* USER CODE BEGIN AT_LocalTime_get_1 */
+
+  /* USER CODE END AT_LocalTime_get_1 */
+  uint32_t baudrate_num;
+	
+	
+	if(tiny_sscanf(param, "%d", &baudrate_num)>1)
+	{
+		return AT_PARAM_ERROR;
+	}
+	for(int i=0;i<(sizeof(allowed_baudrate_num)/sizeof(uint32_t));i++)
+	{
+		if(allowed_baudrate_num[i] == baudrate_num)
+		{
+			AT_PRINTF("Set BaudRate: %d\r\n",baudrate_num);
+			AT_PRINTF("Please reboot\r\n");
+			E2P_LORA_BaudRate_Write(baudrate_num);
+			return AT_OK;
+		}
+	}
+
+	AT_PRINTF("allowed_baudrate: 9600, 115200 \r\n");
+  return AT_PARAM_ERROR;
+  /* USER CODE BEGIN AT_LocalTime_get_2 */
+
+  /* USER CODE END AT_LocalTime_get_2 */
+}
+ATEerror_t AT_BaudRate_get(const char *param)
+{
+	uint32_t baudrate_num;
+	E2P_LORA_BaudRate_Read(&baudrate_num);
+	for(int i=0;i<(sizeof(allowed_baudrate_num)/sizeof(uint32_t));i++)
+	{
+		if(allowed_baudrate_num[i] == baudrate_num)
+		{
+			AT_PRINTF("Set BaudRate: %d\r\n",baudrate_num);
+			AT_PRINTF("Please reboot\r\n");
+			E2P_LORA_BaudRate_Write(baudrate_num);
+			return AT_OK;
+		}
+	}
+
+	
+	AT_PRINTF("Not set BaudRate - default: 9600\r\n");
+	
+	return AT_OK;
+}
+
 /* --------------- Keys, IDs and EUIs management commands --------------- */
 ATEerror_t AT_JoinEUI_get(const char *param)
 {
@@ -621,7 +699,7 @@ ATEerror_t AT_NwkKey_set(const char *param)
   {
     return AT_ERROR;
   }
-  
+  HAL_Delay(10);
   E2P_LORA_Write_Nwkkey(nwkKey);  
   
   if(E2P_LORA_Read_DevNonce() != 0)
@@ -670,7 +748,7 @@ ATEerror_t AT_AppKey_set(const char *param)
   {
     return AT_ERROR;
   }
-  
+  HAL_Delay(10);
   E2P_LORA_Write_Appkey(appKey);
   
   if(E2P_LORA_Read_DevNonce() != 0)
@@ -720,6 +798,7 @@ ATEerror_t AT_NwkSKey_set(const char *param)
     return AT_ERROR;
   }
   
+	HAL_Delay(10);
   E2P_LORA_Write_Nwk_S_key(nwkSKey);
 	E2P_LORA_Write_ABP_High16bit_DL_Fcnt(0);
 
@@ -764,6 +843,7 @@ ATEerror_t AT_AppSKey_set(const char *param)
     return AT_ERROR;
   }
   
+	HAL_Delay(10);
   E2P_LORA_Write_App_S_key(appSKey);
 	E2P_LORA_Write_ABP_High16bit_DL_Fcnt(0);
 
@@ -797,16 +877,26 @@ ATEerror_t AT_DevAddr_set(const char *param)
 
   /* USER CODE END AT_DevAddr_set_1 */
   uint32_t devAddr;
-  if (sscanf_uint32_as_hhx(param, &devAddr) != 4)
-  {
-    return AT_PARAM_ERROR;
-  }
-
+	
+	if (sscanf_uint32_as_hhx(param, &devAddr) != 4)
+	{
+		return AT_PARAM_ERROR;
+	}
   if (LORAMAC_HANDLER_SUCCESS != LmHandlerSetDevAddr(devAddr))
   {
     return AT_ERROR;
   }
 	
+	if(*(param+11)==',' && *(param+12)=='1')
+	{
+		AT_PRINTF("Upfcnt not initialization");
+	}
+	else
+	{
+		E2P_LORA_Write_ABP_Fcnt(0);
+	}
+	
+	Device_Address_ResetFCnts();
 	E2P_LORA_Write_DevAddr((uint8_t*)&devAddr);
 	E2P_LORA_Write_ABP_High16bit_DL_Fcnt(0);
 	
@@ -963,7 +1053,7 @@ ATEerror_t AT_Send(const char *param)
   LmHandlerMsgTypes_t isTxConfirmed;
   unsigned size = 0;
   char hex[3] = {0, 0, 0};
-  UTIL_TIMER_Time_t nextTxIn = 0;
+
   LmHandlerErrorStatus_t lmhStatus = LORAMAC_HANDLER_ERROR;
   ATEerror_t status = AT_ERROR;
 
@@ -1603,6 +1693,11 @@ ATEerror_t AT_Rx2DataRate_set(const char *param)
   {
     return AT_PARAM_ERROR;
   }
+	
+	if(E2P_LORA_Read_Class() == CLASS_C)
+	{
+		LmHandler_OpenContinuousRxCWindow();
+	}
 
   return AT_OK;
   /* USER CODE BEGIN AT_Rx2DataRate_set_2 */
@@ -1643,6 +1738,11 @@ ATEerror_t AT_Rx2Frequency_set(const char *param)
   {
     return AT_PARAM_ERROR;
   }
+	
+	if(E2P_LORA_Read_Class() == CLASS_C)
+	{
+		LmHandler_OpenContinuousRxCWindow();
+	}
 
   return AT_OK;
   /* USER CODE BEGIN AT_Rx2Frequency_set_2 */
@@ -1950,6 +2050,85 @@ ATEerror_t AT_Unconfirmed_Retransmission_set(const char *param)
   /* USER CODE BEGIN AT_Unconfirmed_Retransmission_count_set_2 */
 
   /* USER CODE END AT_Unconfirmed_Retransmission_count_set_2 */
+}
+
+ATEerror_t AT_Channel_Mask_set(const char *param)
+{
+	//AT_PRINTF("KR920 command");
+	
+	LmHandlerErrorStatus_t status = LORAMAC_HANDLER_ERROR;
+	
+	if (!(tiny_sscanf(param, "%x:%x:%x:%x:%x:%x", &enable_chmask[0],&enable_chmask[1],&enable_chmask[2],&enable_chmask[3],&enable_chmask[4],&enable_chmask[5]) <= 6))
+	{		
+		return AT_PARAM_ERROR;
+	}
+	if( 1<<REGION_NVM_MAX_NB_CHANNELS%16 <= enable_chmask[5])//REGION_NVM_MAX_NB_CHANNELS 72
+	{
+		AT_PRINTF("Error: Unusable channel mask is set\r\n");
+		AT_PRINTF("info: maximum channels number: %d\r\n",REGION_NVM_MAX_NB_CHANNELS);
+		return AT_PARAM_ERROR;
+	}
+	
+	
+	
+	
+	status = LmHandler_Channel_Mask_set(enable_chmask);
+	if(status == LORAMAC_HANDLER_ERROR )
+	{
+		return AT_ERROR;
+	}
+	if(status  == LORAMAC_HANDLER_NO_NETWORK_JOINED)
+	{
+		return AT_NO_NET_JOINED;
+	}
+	
+	LoRaMacRegion_t region;
+	int8_t mask_num=0;
+  if (LmHandlerGetActiveRegion(&region) != LORAMAC_HANDLER_SUCCESS)
+  {
+    return AT_PARAM_ERROR;
+  }
+	
+	if( (region == LORAMAC_REGION_US915 || region == LORAMAC_REGION_AU915))
+	{
+		mask_num=6;
+	}
+	else
+	{
+		mask_num=1;
+	}
+	for(int i=0;i<mask_num;i++)
+	{
+		AT_PRINTF("channel_mask[%d]: 0x%04x\r\n",i,enable_chmask[i]);
+	}
+	
+	return AT_OK;
+}
+
+ATEerror_t AT_Channel_Mask_get(const char *param)
+{
+	
+	LoRaMacRegion_t region;
+	int8_t mask_num=0;
+  if (LmHandlerGetActiveRegion(&region) != LORAMAC_HANDLER_SUCCESS)
+  {
+    return AT_PARAM_ERROR;
+  }
+	
+	if( (region == LORAMAC_REGION_US915 || region == LORAMAC_REGION_AU915))
+	{
+		mask_num=6;
+	}
+	else
+	{
+		mask_num=1;
+	}
+	for(int i=0;i<mask_num;i++)
+	{
+		AT_PRINTF("channel_mask[%d]: 0x%04x\r\n",i,enable_chmask[i]);
+	}
+	
+	return AT_OK;
 }
 
 /* --------------- Radio tests commands --------------- */
@@ -2793,7 +2972,7 @@ ATEerror_t AT_P2P_Tx(const char *param)
   uint8_t P2Ppayload[LORAWAN_APP_DATA_BUFFER_MAX_SIZE];
   const char *buf = param;
   uint16_t bufSize = strlen(param);
-  uint32_t appPort;
+
   uint8_t P2Ppayload_len = 0;
   char hex[3] = {0, 0, 0};
 

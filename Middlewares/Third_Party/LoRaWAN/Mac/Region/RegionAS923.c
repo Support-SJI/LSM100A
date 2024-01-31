@@ -50,8 +50,8 @@
 uint8_t REGION_AS923_DEFAULT_CHANNEL_PLAN;
 
 uint32_t REGION_AS923_FREQ_OFFSET;
-uint32_t AS923_MIN_RF_FREQUENCY;
-uint32_t AS923_MAX_RF_FREQUENCY;
+uint32_t AS923_MIN_RF_FREQUENCY = 921500000;
+uint32_t AS923_MAX_RF_FREQUENCY = 928000000;
 
 
 uint8_t AS923_sub_band_setting (LoRaRegion_AS923_sub_band_t band)
@@ -491,6 +491,12 @@ void RegionAS923InitDefaults( InitDefaultsParams_t* params )
             // Default channels
             RegionNvmGroup2->Channels[0] = ( ChannelParams_t ) AS923_LC1;
             RegionNvmGroup2->Channels[1] = ( ChannelParams_t ) AS923_LC2;
+						for(int i=2;i<REGION_NVM_MAX_NB_CHANNELS;i++)
+						{
+							ChannelParams_t channelN = AS923_LC1;
+							channelN.Frequency = channelN.Frequency + (200000*i);
+							RegionNvmGroup2->Channels[i] = channelN;
+						}
 
             // Apply frequency offset
             RegionNvmGroup2->Channels[0].Frequency -= REGION_AS923_FREQ_OFFSET;

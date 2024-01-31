@@ -839,6 +839,13 @@ static void ResetFCnts( void )
     }
 }
 
+void Device_Address_ResetFCnts( void )
+{
+		
+		ResetFCnts();
+    
+}
+
 /*
  *  API functions
  */
@@ -965,7 +972,7 @@ LoRaMacCryptoStatus_t LoRaMacCryptoGetFCntDown( FCntIdentifier_t fCntID, uint32_
     // For LoRaWAN 1.0.X only, allow downlink frames of 0
     if( lastDown == FCNT_DOWN_INITAL_VALUE )
     {
-        *currentDown = frameFcnt | high16bit_DL_Fcnt;;
+        *currentDown = frameFcnt | high16bit_DL_Fcnt;
     }
 		
     else
@@ -988,7 +995,6 @@ LoRaMacCryptoStatus_t LoRaMacCryptoGetFCntDown( FCntIdentifier_t fCntID, uint32_
         else
         {  // Negative difference, assume a roll-over of one uint16_t
 					high16bit_DL_Fcnt += 0x10000;
-					E2P_LORA_Write_ABP_High16bit_DL_Fcnt(high16bit_DL_Fcnt);
 					*currentDown = high16bit_DL_Fcnt | frameFcnt;
         }
     }

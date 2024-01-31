@@ -35,7 +35,7 @@ extern "C" {
 /* USER CODE END Includes */
 
 /* Exported defines ----------------------------------------------------------*/
-#define APP_SW_VERSION    "V0.0.26"	    // 2023.06.26 0.0.25 bug fix
+#define APP_SW_VERSION    "V0.0.31"	    // 2023.11.14 0.0.26 bug fix
 
 #ifdef FEATURE_SUPPORT_IAP_BOOTLOADER
 #define IAP_VERSION		  "V1.0.0"

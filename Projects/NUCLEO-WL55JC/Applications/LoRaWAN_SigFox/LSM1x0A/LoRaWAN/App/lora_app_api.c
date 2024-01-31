@@ -230,7 +230,7 @@ static void APISendTxData(void)
 {
   /* USER CODE BEGIN SendTxData_1 */
   int16_t temperature = 0;
-  UTIL_TIMER_Time_t nextTxIn = 0;
+
   int i = 0;
 
 

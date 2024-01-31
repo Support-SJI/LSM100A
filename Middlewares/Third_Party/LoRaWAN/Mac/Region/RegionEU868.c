@@ -388,6 +388,12 @@ void RegionEU868InitDefaults( InitDefaultsParams_t* params )
             RegionNvmGroup2->Channels[0] = ( ChannelParams_t ) EU868_LC1;
             RegionNvmGroup2->Channels[1] = ( ChannelParams_t ) EU868_LC2;
             RegionNvmGroup2->Channels[2] = ( ChannelParams_t ) EU868_LC3;
+						for(int i=3;i<REGION_NVM_MAX_NB_CHANNELS;i++)
+						{
+							ChannelParams_t channelN = EU868_LC1;
+							channelN.Frequency = channelN.Frequency + (200000*i);
+							RegionNvmGroup2->Channels[i] = channelN;
+						}
 
             // Default ChannelsMask
             RegionNvmGroup2->ChannelsDefaultMask[0] = LC( 1 ) + LC( 2 ) + LC( 3 );

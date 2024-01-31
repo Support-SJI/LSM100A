@@ -337,6 +337,11 @@ LoRaMacCryptoStatus_t LoRaMacCryptoDeriveMcKEKey( KeyIdentifier_t keyID );
  */
 LoRaMacCryptoStatus_t LoRaMacCryptoDeriveMcSessionKeyPair( AddressIdentifier_t addrID, uint32_t mcAddr );
 
+/*!
+ * down frame counter reset
+ */
+void Device_Address_ResetFCnts(void);
+
 
 extern uint16_t E2P_LORA_Read_DevNonce(void);
 extern void E2P_LORA_Write_DevNonce(uint16_t DevNonce);

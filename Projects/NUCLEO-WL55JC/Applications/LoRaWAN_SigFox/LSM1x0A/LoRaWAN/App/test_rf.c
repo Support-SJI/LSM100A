@@ -1014,7 +1014,7 @@ int32_t P2P_RX_Start(void)
   /* init of PER counter */
   uint32_t count_RxOk = 0;
   uint32_t count_RxKo = 0;
-  uint32_t PER = 0;
+
   RxConfigGeneric_t RxConfig = {0};
 
   if (((TestState & RX_TEST_MODU) != RX_TEST_MODU))

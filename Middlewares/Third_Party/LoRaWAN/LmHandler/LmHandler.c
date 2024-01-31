@@ -530,6 +530,12 @@ LmHandlerErrorStatus_t LmHandlerConfigure( LmHandlerParams_t *handlerParams )
     return LORAMAC_HANDLER_SUCCESS;
 }
 
+void LmHandler_OpenContinuousRxCWindow( void )
+{
+	LoRa_MAC_OpenContinuousRxCWindow();
+}
+
+
 bool LmHandlerIsBusy( void )
 {
     if( LoRaMacIsBusy( ) == true )
@@ -1694,21 +1700,16 @@ LmHandlerErrorStatus_t LmHandlerSetDevAddr(uint32_t devAddr)
     MibRequestConfirm_t mibReq;
 
     /* Not yet joined */
-    if (LmHandlerJoinStatus() != LORAMAC_HANDLER_SET)
-    {
-        mibReq.Type = MIB_DEV_ADDR;
-        mibReq.Param.DevAddr = devAddr;
-        if (LoRaMacMibSetRequestConfirm(&mibReq) != LORAMAC_STATUS_OK)
-        {
-            return LORAMAC_HANDLER_ERROR;
-        }
-        return LORAMAC_HANDLER_SUCCESS;
-    }
-    else
-    {
-        /* Cannot change DevAddr in running state */
-        return LORAMAC_HANDLER_ERROR;
-    }
+    
+		mibReq.Type = MIB_DEV_ADDR;
+		mibReq.Param.DevAddr = devAddr;
+		if (LoRaMacMibSetRequestConfirm(&mibReq) != LORAMAC_STATUS_OK)
+		{
+				return LORAMAC_HANDLER_ERROR;
+		}
+		return LORAMAC_HANDLER_SUCCESS;
+    
+    
 #else /* STATIC_DEVICE_ADDRESS == 1 */
     return LORAMAC_HANDLER_ERROR;
 #endif /* STATIC_DEVICE_ADDRESS */
@@ -2303,4 +2304,19 @@ LmHandlerErrorStatus_t LmHandlerNvmDataStore( void )
     }
 
     return lmhStatus;
+}
+
+//LSM100A FWver 1.0.4, SWver 0.0.28 add function
+LmHandlerErrorStatus_t LmHandler_Channel_Mask_set( uint16_t* enable_chmask )
+{
+	if( LmHandlerJoinStatus( ) != LORAMAC_HANDLER_SET )
+	{
+		return LORAMAC_HANDLER_NO_NETWORK_JOINED;
+	}
+	if(LoRaMac_Channel_Mask_set(enable_chmask) != LORAMAC_STATUS_OK)
+	{
+		return LORAMAC_HANDLER_ERROR;
+	}
+	
+	return LORAMAC_HANDLER_SUCCESS;
 }

@@ -29,7 +29,7 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-
+static uint32_t allowed_baudrate_num[] = {9600,115200};
 /* USER CODE END Includes */
 
 #if defined (LPUART)

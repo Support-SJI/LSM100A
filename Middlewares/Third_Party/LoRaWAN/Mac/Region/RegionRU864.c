@@ -359,6 +359,12 @@ void RegionRU864InitDefaults( InitDefaultsParams_t* params )
             // Default channels
             RegionNvmGroup2->Channels[0] = ( ChannelParams_t ) RU864_LC1;
             RegionNvmGroup2->Channels[1] = ( ChannelParams_t ) RU864_LC2;
+						for(int i=2;i<REGION_NVM_MAX_NB_CHANNELS;i++)
+						{
+							ChannelParams_t channelN = RU864_LC1;
+							channelN.Frequency = channelN.Frequency + (200000*i);
+							RegionNvmGroup2->Channels[i] = channelN;
+						}
 
             // Default ChannelsMask
             RegionNvmGroup2->ChannelsDefaultMask[0] = LC( 1 ) + LC( 2 );

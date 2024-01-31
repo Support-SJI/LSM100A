@@ -82,6 +82,7 @@ typedef enum eATEerror
 #define AT_CS         "+CS"
 #define AT_VL         "+VL"
 #define AT_LTIME      "+LTIME"
+#define AT_BAUDRATE		"+BAUDRATE"
 
 /* Keys, IDs and EUIs management commands */
 #define AT_JOINEUI    "+APPEUI" /*to match with V1.0.x specification- For V1.1.x "+APPEUI" will be replaced by "+JOINEUI"*/
@@ -118,6 +119,7 @@ typedef enum eATEerror
 #define AT_ABPFCNT   	  "+ABPFCNT"
 #define AT_CONFIRMRETRANS   "+CNFRETX"
 #define AT_UNCONFIRMRETRANS "+UNCNFRETX"
+#define AT_CHMASK			"+CHMASK"
 
 /* Radio tests commands */
 #define AT_TTONE      "+TTONE"
@@ -251,6 +253,17 @@ ATEerror_t AT_LocalTime_get(const char *param);
 ATEerror_t AT_selection_get_l(const char *param);
 
 ATEerror_t AT_selection_set_l(const char *param);
+
+
+/**
+  * @brief  Set baud rate
+  * @param 
+  * @retval AT_OK
+  */
+ATEerror_t AT_BaudRate_set(const char *param);
+
+ATEerror_t AT_BaudRate_get(const char *param);
+
 
 
 /* --------------- Keys, IDs and EUIs management commands --------------- */
@@ -652,6 +665,21 @@ ATEerror_t AT_Unconfirmed_Retransmission_get(const char *param);
   * @retval AT_OK
   */
 ATEerror_t AT_Unconfirmed_Retransmission_set(const char *param);
+
+
+/**
+  * @brief  get channel mask
+  * @param  param String parameter to enabled channel mask
+  * @retval AT_OK
+  */
+ATEerror_t AT_Channel_Mask_get(const char *param);
+
+/**
+  * @brief  Set channel mask
+  * @param  param String parameter to enabled channel mask
+  * @retval AT_OK
+  */
+ATEerror_t AT_Channel_Mask_set(const char *param);
 
 
 /* --------------- Radio tests commands --------------- */

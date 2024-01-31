@@ -319,6 +319,12 @@ LmHandlerErrorStatus_t LmHandlerDeInit(void);
 LmHandlerErrorStatus_t LmHandlerConfigure( LmHandlerParams_t *handlerParams );
 
 /*!
+ * RX C window open
+ *
+ */
+void LmHandler_OpenContinuousRxCWindow( void );
+
+/*!
  * Indicates if the LoRaMacHandler is busy
  *
  * \retval status [true] Busy, [false] free
@@ -888,6 +894,12 @@ LmHandlerErrorStatus_t LmHandlerGetVersion(LmHandlerVersionType_t lmhType, uint3
  *          0 LORAMAC_HANDLER_SUCCESS
  */
 LmHandlerErrorStatus_t LmHandlerNvmDataStore( void );
+
+
+/*!
+ * Channel mask set
+ */
+LmHandlerErrorStatus_t LmHandler_Channel_Mask_set( uint16_t* enable_chmask );
 
 extern uint8_t E2P_LORA_Read_Class(void);
 extern void E2P_LORA_Read_Appeui(uint8_t *pRappEui);

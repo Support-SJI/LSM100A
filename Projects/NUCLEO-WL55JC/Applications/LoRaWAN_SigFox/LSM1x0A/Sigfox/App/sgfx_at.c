@@ -322,7 +322,7 @@ ATEerror_t AT_SendBit(const char *param)
 
     if (error == SFX_ERR_NONE)
     {
-      print_rx(dl_msg, SGFX_MAX_DL_PAYLOAD_SIZE * 2);
+      print_rx(dl_msg, SGFX_MAX_DL_PAYLOAD_SIZE);
     }
     else if (error == SFX_ERR_INT_GET_RECEIVED_FRAMES_TIMEOUT)
     {
@@ -391,7 +391,8 @@ ATEerror_t AT_SendFrame(const char *param)
 
     if (error == SFX_ERR_NONE)
     {
-      print_rx(dl_msg, SGFX_MAX_DL_PAYLOAD_SIZE * 2);
+			
+      print_rx(dl_msg, SGFX_MAX_DL_PAYLOAD_SIZE);
     }
     else if (error == SFX_ERR_INT_GET_RECEIVED_FRAMES_TIMEOUT)
     {
@@ -492,7 +493,7 @@ ATEerror_t AT_SendHexFrame(const char *param)
 
     if (error == SFX_ERR_NONE)
     {
-      print_rx(dl_msg, SGFX_MAX_DL_PAYLOAD_SIZE * 2);
+      print_rx(dl_msg, SGFX_MAX_DL_PAYLOAD_SIZE);
     }
     else if (error == SFX_ERR_INT_GET_RECEIVED_FRAMES_TIMEOUT)
     {
@@ -1938,10 +1939,18 @@ static void print_rx(uint8_t *pt, uint32_t n)
   /* USER CODE BEGIN print_rx_1 */
 
   /* USER CODE END print_rx_1 */
+	AT_PRINTF("\r\nlength: %d\r\n",n);
   AT_PRINTF("\r\n+RX=");
   for (int32_t i = 0; i < n; i++)
   {
     AT_PRINTF("%c", pt[i]);
+  }
+  AT_PRINTF("\r\n");
+	
+	AT_PRINTF("\r\n+RX_H=");
+  for (int32_t i = 0; i < n; i++)
+  {
+    AT_PRINTF("%02x", pt[i]);
   }
   AT_PRINTF("\r\n");
   /* USER CODE BEGIN print_rx_2 */

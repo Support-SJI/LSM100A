@@ -799,6 +799,18 @@ void E2P_LORA_Read(e_EE_LORA_ID addr, uint32_t *data)
   /* USER CODE END E2P_Read_2 */
 }
 
+void E2P_LORA_BaudRate_Write(uint32_t baudrate)
+{
+	HAL_FLASH_Unlock();
+	E2P_LORA_Write(EE_LORA_BAUDRATE,baudrate);
+	HAL_FLASH_Lock();
+}
+
+void E2P_LORA_BaudRate_Read(uint32_t *baudrate)
+{
+	EE_LoRa_Read(EE_BANK_0,EE_LORA_BAUDRATE,baudrate);
+}
+
 /* USER CODE BEGIN PrFD */
 
 /* USER CODE END PrFD */

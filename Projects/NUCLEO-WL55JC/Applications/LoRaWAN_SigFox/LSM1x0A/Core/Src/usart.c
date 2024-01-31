@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
+#include "lora_eeprom_if.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -46,7 +47,25 @@ void MX_LPUART1_UART_Init(void)
 
   /* USER CODE END LPUART1_Init 1 */
   hlpuart1.Instance = LPUART1;
-  hlpuart1.Init.BaudRate = 9600;
+	uint32_t baudrate_num;
+	E2P_LORA_BaudRate_Read(&baudrate_num);
+	hlpuart1.Init.BaudRate = 9600;
+
+  uint8_t count = 0;
+  
+	for(int i=0;i<(sizeof(allowed_baudrate_num)/sizeof(uint32_t));i++)
+	{
+		if(allowed_baudrate_num[i]==baudrate_num)
+		{
+			count = 1;
+			hlpuart1.Init.BaudRate = baudrate_num;
+		}
+	}	
+	if( count == 0 )
+	{
+	  E2P_LORA_BaudRate_Write(9600);
+	}
+	
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
   hlpuart1.Init.StopBits = UART_STOPBITS_1;
   hlpuart1.Init.Parity = UART_PARITY_NONE;

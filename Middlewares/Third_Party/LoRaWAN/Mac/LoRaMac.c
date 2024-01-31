@@ -57,6 +57,10 @@
 #include "LoRaMac.h"
 #include "mw_log_conf.h"
 
+#include "stm32_adv_trace.h"
+
+#define FCNT_PRINTF(...)     do{  UTIL_ADV_TRACE_COND_FSend(VLEVEL_OFF, T_REG_OFF, TS_OFF, __VA_ARGS__);}while(0)
+
 
 #if (defined( LORAMAC_VERSION ) && (( LORAMAC_VERSION == 0x01000300 ) || ( LORAMAC_VERSION == 0x01000400 )))
 #else
@@ -1380,8 +1384,49 @@ static void ProcessRadioRxDone( void )
                 PrepareRxDoneAbort( );
                 return;
             }
-
-            macCryptoStatus = LoRaMacCryptoUnsecureMessage( addrID, address, fCntID, downLinkCounter, &macMsgData );
+						
+						macCryptoStatus = LoRaMacCryptoUnsecureMessage( addrID, address, fCntID, downLinkCounter, &macMsgData );
+						if(macCryptoStatus == LORAMAC_CRYPTO_SUCCESS)
+						{							
+							if(E2P_LORA_Read_ABP_High16bit_DL_Fcnt() != (downLinkCounter&0xFFFF0000))
+							{
+								E2P_LORA_Write_ABP_High16bit_DL_Fcnt(downLinkCounter&0xFFFF0000);
+							}
+						}
+						uint8_t error_flag = 0;
+						if(macCryptoStatus != LORAMAC_CRYPTO_SUCCESS)
+						{
+							macCryptoStatus = LoRaMacCryptoUnsecureMessage( addrID, address, fCntID, downLinkCounter & 0xFFFF, &macMsgData );
+							error_flag=1;
+						}
+						if(macCryptoStatus != LORAMAC_CRYPTO_SUCCESS)
+						{
+							macCryptoStatus = LoRaMacCryptoUnsecureMessage( addrID, address, fCntID, downLinkCounter - 0x10000 , &macMsgData );
+							error_flag=2;
+						}
+						if(macCryptoStatus != LORAMAC_CRYPTO_SUCCESS)
+						{
+							macCryptoStatus = LoRaMacCryptoUnsecureMessage( addrID, address, fCntID, downLinkCounter + 0x10000 , &macMsgData );
+							error_flag=3;
+						}
+						if(macCryptoStatus==LORAMAC_CRYPTO_SUCCESS && error_flag>0)
+						{
+							switch(error_flag)
+							{
+								case 1:
+									E2P_LORA_Write_ABP_High16bit_DL_Fcnt(0);
+									break;
+								case 2:
+									E2P_LORA_Write_ABP_High16bit_DL_Fcnt((downLinkCounter&0xFFFF0000)-0x10000);
+									break;
+								case 3:
+									E2P_LORA_Write_ABP_High16bit_DL_Fcnt((downLinkCounter&0xFFFF0000)+0x10000);
+									break;
+							}
+							downLinkCounter|=E2P_LORA_Read_ABP_High16bit_DL_Fcnt();
+							error_flag = 0;							
+						}
+						
             if( macCryptoStatus != LORAMAC_CRYPTO_SUCCESS )
             {
                 if( macCryptoStatus == LORAMAC_CRYPTO_FAIL_ADDRESS )
@@ -1397,6 +1442,7 @@ static void ProcessRadioRxDone( void )
                 PrepareRxDoneAbort( );
                 return;
             }
+						FCNT_PRINTF("downlink_counter: %d\r\n",downLinkCounter);
 #endif /* LORAMAC_VERSION */
 
             MacCtx.McpsIndication.Status = LORAMAC_EVENT_INFO_STATUS_OK;
@@ -2471,7 +2517,7 @@ static void ProcessMacCommands( uint8_t *payload, uint8_t macIndex, uint8_t comm
     uint8_t macCmdPayload[2] = { 0x00, 0x00 };
 
 #if ( defined( LORAMAC_VERSION ) && ( LORAMAC_VERSION == 0x01000400 ))
-    if( ( rxSlot != RX_SLOT_WIN_1 ) && ( rxSlot != RX_SLOT_WIN_2 ) )
+    if( ( rxSlot != RX_SLOT_WIN_1 ) && ( rxSlot != RX_SLOT_WIN_2 ) && ( rxSlot != RX_SLOT_WIN_CLASS_C ))
     {
         // Do only parse MAC commands for Class A RX windows
         return;
@@ -2633,6 +2679,7 @@ static void ProcessMacCommands( uint8_t *payload, uint8_t macIndex, uint8_t comm
             }
             case SRV_MAC_RX_PARAM_SETUP_REQ:
             {
+								MW_LOG(TS_ON, VLEVEL_M,"MAC Command: RX_PARAM_SETUP\r\n");
                 RxParamSetupReqParams_t rxParamSetupReq;
                 status = 0x07;
 
@@ -2678,6 +2725,7 @@ static void ProcessMacCommands( uint8_t *payload, uint8_t macIndex, uint8_t comm
             }
             case SRV_MAC_NEW_CHANNEL_REQ:
             {
+								MW_LOG(TS_ON, VLEVEL_M,"MAC Command: NEW_CHANNEL_REQ\r\n");
                 NewChannelReqParams_t newChannelReq;
                 ChannelParams_t chParam;
                 status = 0x03;
@@ -3438,7 +3486,7 @@ static void OpenContinuousRxCWindow( void )
 {
     // Compute RxC windows parameters
     RegionComputeRxWindowParameters( Nvm.MacGroup2.Region,
-                                     Nvm.MacGroup2.MacParams.RxCChannel.Datarate,
+                                     Nvm.MacGroup2.MacParams.Rx2Channel.Datarate,
                                      Nvm.MacGroup2.MacParams.MinRxSymbols,
                                      Nvm.MacGroup2.MacParams.SystemMaxRxError,
                                      &MacCtx.RxWindowCConfig );
@@ -3449,6 +3497,7 @@ static void OpenContinuousRxCWindow( void )
 #endif /* LORAMAC_VERSION */
     // Setup continuous listening
     MacCtx.RxWindowCConfig.RxContinuous = true;
+		MacCtx.RxWindowCConfig.Frequency = Nvm.MacGroup2.MacParams.Rx2Channel.Frequency;
 
     // At this point the Radio should be idle.
     // Thus, there is no need to set the radio in standby mode.
@@ -3458,6 +3507,21 @@ static void OpenContinuousRxCWindow( void )
         Radio.Rx( 0 ); // Continuous mode
         MacCtx.RxSlot = MacCtx.RxWindowCConfig.RxSlot;
     }
+}
+
+void LoRa_MAC_OpenContinuousRxCWindow( void )
+{
+
+	
+	
+	
+	// Set the radio into sleep mode in case we are still in RX mode
+	Radio.Sleep( );
+
+	OpenContinuousRxCWindow( );
+
+	
+	//OpenContinuousRxCWindow();
 }
 
 static LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t* macHdr, LoRaMacFrameCtrl_t* fCtrl, uint8_t fPort, void* fBuffer, uint16_t fBufferSize )
@@ -3492,6 +3556,11 @@ static LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t* macHdr, LoRaMacFrameCtrl_t
             MacCtx.TxMsg.Message.Data.FHDR.FCtrl.Value = fCtrl->Value;
             MacCtx.TxMsg.Message.Data.FRMPayloadSize = MacCtx.AppDataSize;
             MacCtx.TxMsg.Message.Data.FRMPayload = MacCtx.AppData;
+				
+						if(Nvm.MacGroup2.NetworkActivation == ACTIVATION_TYPE_ABP)
+						{
+							flag = 1;
+						}
 
             if( LORAMAC_CRYPTO_SUCCESS != LoRaMacCryptoGetFCntUp( &fCntUp ) )
             {
@@ -3507,7 +3576,8 @@ static LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t* macHdr, LoRaMacFrameCtrl_t
 #endif /* LORAMAC_VERSION */
             MacCtx.McpsConfirm.AckReceived = false;
             MacCtx.McpsConfirm.UpLinkCounter = fCntUp;
-
+						FCNT_PRINTF("uplink_counter: %d\r\n",fCntUp);
+						
             // Handle the MAC commands if there are any available
             if( LoRaMacCommandsGetSizeSerializedCmds( &macCmdsSize ) != LORAMAC_COMMANDS_SUCCESS )
             {
@@ -5908,3 +5978,18 @@ LoRaMacStatus_t LoRaMacDeInitialization( void )
         return LORAMAC_STATUS_BUSY;
     }
 }
+
+LoRaMacStatus_t LoRaMac_Channel_Mask_set( uint16_t* enable_chmask )
+{
+	ChanMaskSetParams_t chanMaskSet;
+	
+	chanMaskSet.ChannelsMaskIn = enable_chmask;
+	chanMaskSet.ChannelsMaskType = CHANNELS_MASK;
+
+	if( RegionChanMaskSet( Nvm.MacGroup2.Region, &chanMaskSet ) == false )
+	{
+			return LORAMAC_STATUS_PARAMETER_INVALID;
+	}
+	return LORAMAC_STATUS_OK;
+}
+

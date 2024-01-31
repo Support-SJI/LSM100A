@@ -219,6 +219,12 @@ bool LoRaMacIsBusy( void );
 void LoRaMacProcess( void );
 
 /*!
+ * RXC window open.
+ *
+ */
+void LoRa_MAC_OpenContinuousRxCWindow( void );
+
+/*!
  * \brief   Queries the LoRaMAC if it is possible to send the next frame with
  *          a given application data payload size. The LoRaMAC takes scheduled
  *          MAC commands into account and reports, when the frame can be send or not.
@@ -473,6 +479,12 @@ LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t* mcpsRequest, bool allowDelayedTx 
  *          \ref LORAMAC_STATUS_BUSY
  */
 LoRaMacStatus_t LoRaMacDeInitialization( void );
+
+
+/*!
+ * \brief   LoRaMAC channel mask set
+ */
+LoRaMacStatus_t LoRaMac_Channel_Mask_set( uint16_t* enable_chmask );
 
 extern uint8_t E2P_LORA_Read_Class(void);
 

@@ -84,6 +84,7 @@ typedef enum
   EE_LORA_ID_COUNT,
 	EE_LORA_WORD0_DEVADDR,
 	EE_LORA_ABP_HIGH16BIT_FCNT_ID,
+	EE_LORA_BAUDRATE,
 } e_EE_LORA_ID;
 
 /* USER CODE BEGIN EV */
@@ -161,6 +162,8 @@ void E2P_LORA_Write_App_S_key(uint8_t *pWappSKey);
 void E2P_LORA_Read_Nwk_S_key(uint8_t *pRnwkSKey);
 void E2P_LORA_Write_Nwk_S_key(uint8_t *pWnwkSKey);
 
+void E2P_LORA_BaudRate_Write(uint32_t baudrate);
+void E2P_LORA_BaudRate_Read(uint32_t *baudrate);
 
 
 
