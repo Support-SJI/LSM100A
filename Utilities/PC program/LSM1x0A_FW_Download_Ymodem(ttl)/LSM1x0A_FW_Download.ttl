@@ -1,0 +1,72 @@
+; ----------------------------- Init Settings -----------------------------
+getdir macro_path
+
+Download_File_Path=macro_path
+Download_File_Name='LSM100A_V104_F_231114.bin'
+
+strconcat Download_File_Path '\LSM1x0A_FW_File\'
+strconcat Download_File_Path Download_File_Name
+
+Download_Baudrate=115200
+
+Download_Mode_Command='1'
+Download_Mode_String='Waiting for the file to be sent'
+
+Download_Success_String='Size:'
+
+count=0
+
+
+
+; ----------------------------- Find Download File -----------------------------
+filesearch Download_File_Path
+if result=0 messagebox 'F/W File Not Find.' 'error'
+if result=1 goto UART_Connect
+
+goto Download_END
+
+; ----------------------------- UART Connect -----------------------------
+:UART_Connect
+CONNECT '/C=21'
+
+setbaud Download_Baudrate
+
+
+
+; ----------------------------- Set Timeout Limit as 10 mSec -----------------------------
+mtimeout = 50
+
+
+
+; ----------------------------- Check Download Mode String -----------------------------
+do while count<100
+	sendln Download_Mode_Command
+	count=count+1
+	wait Download_Mode_String
+	if result=1 goto Download_Mode_Success
+loop
+
+goto Download_END
+
+
+
+; -----------------------------Send F/W Download File Path Y-modem -----------------------------
+:Download_Mode_Success
+ymodemsend Download_File_Path
+pause 1
+
+
+
+; ----------------------------- Set Timeout Limit as 30 Sec -----------------------------
+timeout = 40
+
+
+
+; ----------------------------- Check Download Success String -----------------------------
+:Download_Success
+wait Download_Success_String
+
+
+:Download_END
+pause 1
+closett
